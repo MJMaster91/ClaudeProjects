@@ -15,7 +15,18 @@ class ContactsManagerScreen extends ConsumerWidget {
     final contactsAsync = ref.watch(contactsProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Contacts')),
+      appBar: AppBar(
+        title: const Text('Contacts'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.home),
+            onPressed: () {
+              ProviderScope.containerOf(context).invalidate(contactsProvider);
+              Navigator.of(context).popUntil((r) => r.isFirst);
+            },
+          ),
+        ],
+      ),
       body: contactsAsync.when(
         data: (contacts) => contacts.isEmpty
             ? const Center(

@@ -1,8 +1,10 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:image_picker/image_picker.dart';
 import '../../db/database_helper.dart';
 import '../../models/contact.dart';
+import '../../providers/contacts_provider.dart';
 import '../../theme/app_theme.dart';
 
 class ContactEditScreen extends StatefulWidget {
@@ -109,13 +111,12 @@ class _ContactEditScreenState extends State<ContactEditScreen> {
       appBar: AppBar(
         title: Text(_isEditing ? 'Edit Contact' : 'New Contact'),
         actions: [
-          TextButton(
-            onPressed: _save,
-            child: const Text('Save',
-                style: TextStyle(
-                    fontSize: 18,
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold)),
+          IconButton(
+            icon: const Icon(Icons.home),
+            onPressed: () {
+              ProviderScope.containerOf(context).invalidate(contactsProvider);
+              Navigator.of(context).popUntil((r) => r.isFirst);
+            },
           ),
         ],
       ),

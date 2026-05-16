@@ -113,7 +113,7 @@ class _SetupGateState extends ConsumerState<SetupGate> {
         appBar: AppBar(
           title: const Text('Setup'),
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
+            icon: const Icon(Icons.home),
             onPressed: _goHome,
           ),
         ),
