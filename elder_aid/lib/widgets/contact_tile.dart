@@ -71,7 +71,7 @@ class _FullPhoto extends StatelessWidget {
         return Image.network(
           photoPath!,
           fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => _initialsBox(),
+          errorBuilder: (_, _, _) => _initialsBox(),
         );
       }
       final file = File(photoPath!);

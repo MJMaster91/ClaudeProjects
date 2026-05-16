@@ -1,15 +1,10 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../db/database_helper.dart';
-import '../models/contact.dart';
 import '../widgets/contact_tile.dart';
+import '../providers/contacts_provider.dart';
 import 'messages_screen.dart';
 import 'setup/setup_gate.dart';
-
-final contactsProvider = FutureProvider<List<Contact>>((ref) async {
-  return DatabaseHelper().getAllContacts();
-});
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
