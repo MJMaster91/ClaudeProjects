@@ -77,10 +77,12 @@ The app fully replaces the normal phone home screen. No access to other apps dur
 **Description:** The main screen the elderly user sees at all times. Displays a grid of large contact tiles — each tile shows a full-face photo, large name text, and a call button. Maximum 8 contacts visible without scrolling (recommended: 4–6 for clearest layout).
 
 **Behaviour:**
-- Tapping a contact tile immediately initiates a phone call (uses device native dialer)
+- Each contact tile is a full-bleed photo card — the photo fills the entire tile, with the contact name as bold white text on a dark gradient overlay at the bottom
+- Tapping anywhere on a contact tile immediately initiates a phone call (uses device native dialer)
 - No confirmation dialog — one tap = call (speed over safety; relatives set up only trusted numbers)
 - Missed calls shown as a badge on the contact tile
-- Large clock and date displayed at the top
+- Large clock and date displayed at the top, with a teal icon badge identifying the current screen
+- **Help tile:** An amber card in the contact grid (same size as contact tiles) showing a large `?` icon and "Help" label — tapping opens a help dialog. Not a floating button.
 
 **Tech:** Flutter GridView, `url_launcher` package for `tel:` links, `sqflite` for contact storage
 
@@ -129,10 +131,14 @@ The app fully replaces the normal phone home screen. No access to other apps dur
 ### Feature 4 — Setup Mode
 **Description:** PIN-protected admin interface the relative uses to configure the app. Hidden from the end user during normal operation.
 
-**Access:** Hidden entry point — e.g. tap the clock 5 times, or a small gear icon only visible when the relative knows to look. Prompts for a 4-digit PIN.
+**Access:** For MVP evaluation, Setup is accessible via the bottom navigation bar. Before store release this should be replaced with a hidden entry point (e.g. tap the clock 5 times) so it is invisible to the elderly user during normal operation.
+
+**PIN storage:** MVP stores the 4-digit PIN as a plain string in `shared_preferences`. Upgrade to bcrypt hash before public release.
 
 **Setup mode screens:**
 - **Contacts manager** — add/edit/delete contacts (name, phone number, photo from gallery or camera)
+  - *Post-MVP:* Import contact directly from device phone book (contacts_service package)
+  - *Post-MVP:* Drag-and-drop reordering of contacts in the grid (sort_order field already in DB)
 - **Quick replies** — edit the pre-written SMS quick-reply options
 - **Display settings** — font size slider (Large / Extra Large / Maximum), theme (MVP: Warm & Friendly only)
 - **AI helper settings** — enter/update OpenAI API key, test the helper
@@ -268,11 +274,13 @@ The app fully replaces the normal phone home screen. No access to other apps dur
 | Tap target minimum | 64×64dp (exceeds WCAG 2.1 AA 44px minimum) |
 | Corner radius | 16dp (rounded, approachable) |
 | Iconography | Filled, large, simple — no thin-line icons |
-| Contact photo | Circular crop, 96dp diameter in grid |
+| Contact photo | Full-bleed tile photo (fills entire card); name as bold white text on dark gradient overlay |
 
 ### Navigation
 - Maximum 2 taps to reach any action
-- Bottom navigation bar: Home (contacts) | Messages | Help
+- Bottom navigation bar (teal, full-width): **Messages** | **Setup** (Setup hidden pre-launch; replaced with hidden entry point)
+- Help accessible via amber tile in the contact grid
+- Every screen shows a home icon in the AppBar for 1-tap return to Home
 - No hamburger menus, no nested settings visible to end user
 - Back button always returns to Home screen (never exits app)
 
@@ -293,9 +301,9 @@ The app fully replaces the normal phone home screen. No access to other apps dur
         |                         |
    (native dialer)         [Compose Message]
 
-[Help Overlay] — accessible from any screen via persistent button
+[Help Dialog] — triggered by Help tile in the contact grid (not a separate route)
 
-[Setup Mode] — PIN-gated, separate from main navigation
+[Setup Mode] — PIN-gated, accessible via bottom nav (hidden entry point pre-launch)
   ├── Contacts Manager
   ├── Quick Replies
   ├── Display Settings
@@ -430,7 +438,30 @@ The app fully replaces the normal phone home screen. No access to other apps dur
 
 ---
 
-## 13. Open Items for Future Decisions
+## 13. Implementation Status
+> Last updated: 2026-05-17
+
+| Feature | Status | Notes |
+|---|---|---|
+| Home Screen (Feature 1) | ✅ Built | Full-bleed tiles, teal header, amber Help tile, teal bottom nav |
+| Messages Screen (Feature 2) | ⬜ Not started | Next priority |
+| AI Helper (Feature 3) | 📋 Phase 2 | Deferred — needs OpenAI key + microphone permission |
+| Setup — Contacts Manager | ✅ Built | PIN gate (4-digit numpad), add/edit/delete, image picker |
+| Setup — App Settings | ⬜ Not started | Change PIN, set user's first name |
+| Setup — Quick Replies | ⬜ Not started | Required for Messages screen |
+| Kiosk / Launcher Mode | ⬜ Pre-launch | AndroidManifest HOME intent filter not yet added |
+
+### Pre-launch hardening checklist
+- [ ] Hide Setup entry point (remove from bottom nav; add clock-tap secret gesture)
+- [ ] Upgrade PIN storage from plain string to bcrypt hash
+- [ ] Remove demo seed contacts (`seedDemoContactsIfEmpty` in `database_helper.dart`)
+- [ ] Add CATEGORY_HOME intent filter to AndroidManifest for kiosk mode
+- [ ] Add privacy policy URL (required for store submission)
+- [ ] Generate and securely store release keystore
+
+---
+
+## 14. Open Items for Future Decisions
 - Final app name (ElderAid is placeholder)
 - OpenAI API key management model for Phase 2 (per-user key vs. proxied through backend)
 - Exact Quick Reply defaults (to be defined during UX design)
