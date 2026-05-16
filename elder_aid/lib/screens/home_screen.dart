@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../db/database_helper.dart';
 import '../models/contact.dart';
 import '../widgets/contact_tile.dart';
-import '../widgets/help_button.dart';
 import 'messages_screen.dart';
 import 'setup/setup_gate.dart';
 
@@ -84,9 +83,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             mainAxisSpacing: 12,
                             childAspectRatio: 0.82,
                           ),
-                          itemCount: contacts.length,
-                          itemBuilder: (_, i) =>
-                              ContactTile(contact: contacts[i]),
+                          itemCount: contacts.length + 1,
+                          itemBuilder: (ctx, i) => i < contacts.length
+                              ? ContactTile(contact: contacts[i])
+                              : _HelpTile(context: ctx),
                         ),
                   loading: () =>
                       const Center(child: CircularProgressIndicator()),
@@ -99,7 +99,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ],
           ),
         ),
-        floatingActionButton: const HelpButton(),
         bottomNavigationBar: _BottomNav(
           onMessages: () => Navigator.push(
             context,
@@ -125,23 +124,43 @@ class _ClockHeader extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(16, 24, 16, 12),
-      child: Column(
-        children: [
-          Text(
-            time,
-            style: const TextStyle(
-              fontSize: 72,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF2C2C2C),
-              height: 1,
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Container(
+              width: 72,
+              decoration: BoxDecoration(
+                color: const Color(0xFF4A9B8E),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: const Icon(Icons.phone, size: 40, color: Colors.white),
             ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            date,
-            style: const TextStyle(fontSize: 20, color: Color(0xFF6B6B6B)),
-          ),
-        ],
+            const SizedBox(width: 20),
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    time,
+                    style: const TextStyle(
+                      fontSize: 72,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF2C2C2C),
+                      height: 1,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    date,
+                    style: const TextStyle(fontSize: 20, color: Color(0xFF6B6B6B)),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -165,6 +184,61 @@ class _EmptyState extends StatelessWidget {
   }
 }
 
+class _HelpTile extends StatelessWidget {
+  final BuildContext context;
+  const _HelpTile({required this.context});
+
+  void _showHelpDialog() {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Need Help?',
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+        content: const Text(
+          'Tap a contact\'s photo to call them.\n\nTap Messages to send a text.',
+          style: TextStyle(fontSize: 18),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK', style: TextStyle(fontSize: 18)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      elevation: 2,
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: _showHelpDialog,
+        child: Container(
+          color: const Color(0xFFE8A838),
+          child: const Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.help_outline, size: 72, color: Colors.white),
+              SizedBox(height: 12),
+              Text(
+                'Help',
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _BottomNav extends StatelessWidget {
   final VoidCallback onMessages;
   final VoidCallback onSetup;
@@ -173,11 +247,8 @@ class _BottomNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 72,
-      decoration: const BoxDecoration(
-        color: Color(0xFFFDF6EC),
-        border: Border(top: BorderSide(color: Color(0xFFE0D8CF))),
-      ),
+      height: 88,
+      color: const Color(0xFF4A9B8E),
       child: Row(
         children: [
           _NavItem(
@@ -211,11 +282,11 @@ class _NavItem extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 28, color: const Color(0xFF4A9B8E)),
-            const SizedBox(height: 4),
+            Icon(icon, size: 36, color: Colors.white),
+            const SizedBox(height: 6),
             Text(label,
                 style: const TextStyle(
-                    fontSize: 14, color: Color(0xFF2C2C2C))),
+                    fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
           ],
         ),
       ),

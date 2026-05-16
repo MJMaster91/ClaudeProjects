@@ -19,64 +19,80 @@ class ContactTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       elevation: 2,
+      clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: _call,
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _Avatar(photoPath: contact.photoPath, name: contact.name),
-              const SizedBox(height: 10),
-              Text(
-                contact.name,
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.textPrimary,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            _FullPhoto(photoPath: contact.photoPath, name: contact.name),
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.bottomCenter,
+                    end: Alignment.topCenter,
+                    colors: [Colors.black.withValues(alpha: 0.75), Colors.transparent],
+                  ),
                 ),
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 8),
-              SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: ElevatedButton.icon(
-                  onPressed: _call,
-                  icon: const Icon(Icons.call, size: 20),
-                  label: const Text('Call', style: TextStyle(fontSize: 16)),
+                child: Text(
+                  contact.name,
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
-class _Avatar extends StatelessWidget {
+class _FullPhoto extends StatelessWidget {
   final String? photoPath;
   final String name;
-  const _Avatar({this.photoPath, required this.name});
+  const _FullPhoto({this.photoPath, required this.name});
 
   @override
   Widget build(BuildContext context) {
     if (photoPath != null) {
+      if (photoPath!.startsWith('http')) {
+        return Image.network(
+          photoPath!,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => _initialsBox(),
+        );
+      }
       final file = File(photoPath!);
       if (file.existsSync()) {
-        return CircleAvatar(radius: 40, backgroundImage: FileImage(file));
+        return Image.file(file, fit: BoxFit.cover);
       }
     }
-    return CircleAvatar(
-      radius: 40,
-      backgroundColor: AppTheme.primary,
+    return _initialsBox();
+  }
+
+  Widget _initialsBox() {
+    return Container(
+      color: AppTheme.primary,
+      alignment: Alignment.center,
       child: Text(
         name.isNotEmpty ? name[0].toUpperCase() : '?',
-        style: const TextStyle(fontSize: 32, color: Colors.white),
+        style: const TextStyle(
+          fontSize: 64,
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+        ),
       ),
     );
   }
