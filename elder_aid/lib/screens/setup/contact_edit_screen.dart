@@ -21,6 +21,8 @@ class _ContactEditScreenState extends State<ContactEditScreen> {
   String? _photoPath;
   final _picker = ImagePicker();
 
+  bool _hasWhatsapp = false;
+
   bool get _isEditing => widget.contact != null;
 
   @override
@@ -30,6 +32,7 @@ class _ContactEditScreenState extends State<ContactEditScreen> {
       _nameCtrl.text = widget.contact!.name;
       _phoneCtrl.text = widget.contact!.phone;
       _photoPath = widget.contact!.photoPath;
+      _hasWhatsapp = widget.contact!.hasWhatsapp;
     }
   }
 
@@ -97,10 +100,14 @@ class _ContactEditScreenState extends State<ContactEditScreen> {
         phone: phone,
         photoPath: _photoPath,
         sortOrder: widget.contact!.sortOrder,
+        hasWhatsapp: _hasWhatsapp,
       ));
     } else {
       await db.insertContact(Contact(
-          name: name, phone: phone, photoPath: _photoPath));
+          name: name,
+          phone: phone,
+          photoPath: _photoPath,
+          hasWhatsapp: _hasWhatsapp));
     }
     if (mounted) Navigator.pop(context);
   }
@@ -168,7 +175,20 @@ class _ContactEditScreenState extends State<ContactEditScreen> {
                 prefixIcon: Icon(Icons.phone, size: 28),
               ),
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: 12),
+            SwitchListTile(
+              secondary: const Icon(Icons.chat, size: 28,
+                  color: Color(0xFF25D366)),
+              title: const Text('Uses WhatsApp',
+                  style: TextStyle(fontSize: 20)),
+              value: _hasWhatsapp,
+              onChanged: (v) => setState(() => _hasWhatsapp = v),
+              tileColor: AppTheme.background,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  side: BorderSide(color: Colors.grey.shade300)),
+            ),
+            const SizedBox(height: 20),
             SizedBox(
               width: double.infinity,
               height: 64,

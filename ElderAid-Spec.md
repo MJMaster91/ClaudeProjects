@@ -88,18 +88,21 @@ The app fully replaces the normal phone home screen. No access to other apps dur
 
 ---
 
-### Feature 2 — Messages Screen
-**Description:** Simplified SMS interface. Shows only conversations with approved contacts. No unknown numbers visible.
+### Feature 2 — Messages Screen (WhatsApp)
+**Description:** A dedicated Messages screen that mirrors the home screen's large-tile grid, but tapping a contact opens their WhatsApp conversation directly. Unread WhatsApp messages are shown as a badge on the contact tile.
 
 **Behaviour:**
-- Bottom navigation tab switches between Contacts and Messages
-- Conversation list shows contact photo + name + last message preview (large text)
-- Message composer has large text input, send button, and pre-written quick-reply options (e.g. "On my way", "Call me", "I'm okay") — configurable by relative in setup mode
-- Incoming messages from non-approved numbers are silently filtered (not shown, not notified)
+- Bottom navigation switches between Phone (home) and Messages
+- Messages screen shows a 2-column grid of large contact tiles — same visual style as the home screen
+- Only contacts marked "Uses WhatsApp" in Setup appear on this screen
+- Tapping a tile opens WhatsApp directly at that contact's conversation (deep link: `whatsapp://send?phone=…`)
+- If WhatsApp is not installed, a friendly SnackBar explains this
+- **Unread badge:** Android's Notification Listener Service detects incoming WhatsApp notifications and shows a green badge (unread count) on the relevant contact tile. Badge clears when the user taps the tile.
+- Notification access must be granted once by the relative in Setup. A guided prompt is shown if access is not yet granted.
 
-**Tech:** `telephony` or `flutter_sms` package for SMS read/send; Android SMS permissions required; iOS SMS sending via `url_launcher` (`sms:` scheme, limited)
+**Tech:** `url_launcher` (already included) for WhatsApp deep links; `notification_listener_service` Flutter package for notification badge detection; no API keys or accounts required
 
-> **iOS limitation:** iOS restricts third-party SMS access more than Android. MVP may need to open the native iOS Messages app pre-filled for sending. Full SMS integration is Android-first.
+> **SMS (Wave 2):** Full native SMS inbox — read/send threads, quick-reply chips — is planned for Wave 2. See Wave 2 roadmap section.
 
 ---
 
@@ -295,17 +298,17 @@ The app fully replaces the normal phone home screen. No access to other apps dur
 
 ### MVP
 ```
-[Home / Contact Grid]  ←→  [Messages List]
+[Home / Contact Grid]  ←→  [Messages / WhatsApp Grid]
         |                         |
-   [Active Call]           [Conversation View]
-        |                         |
-   (native dialer)         [Compose Message]
+   [Active Call]           Opens WhatsApp app at contact's conversation
+   (native dialer)         (deep link — leaves app briefly)
 
 [Help Dialog] — triggered by Help tile in the contact grid (not a separate route)
 
 [Setup Mode] — PIN-gated, accessible via bottom nav (hidden entry point pre-launch)
-  ├── Contacts Manager
-  ├── Quick Replies
+  ├── Contacts Manager  (add/edit/delete; WhatsApp toggle per contact)
+  ├── Notification Access  (grant once for WhatsApp badge detection)
+  ├── Quick Replies  (Wave 2 — for SMS)
   ├── Display Settings
   ├── AI Helper Settings
   └── App Settings
@@ -386,6 +389,7 @@ The app fully replaces the normal phone home screen. No access to other apps dur
 ## 10. Phase 2 & 3 Roadmap
 
 ### Phase 2 — Family Pro + German Localisation
+- **Native SMS inbox** — read + send SMS threads natively, quick-reply chips, `telephony` package, Android-primary
 - German localisation (ARB translation files, owner verifies as native speaker)
 - Cloud backend (Supabase, EU-hosted) — required for all remote management features
 - Remote contact management via family web dashboard
@@ -444,7 +448,7 @@ The app fully replaces the normal phone home screen. No access to other apps dur
 | Feature | Status | Notes |
 |---|---|---|
 | Home Screen (Feature 1) | ✅ Built | Full-bleed tiles, teal header, amber Help tile, teal bottom nav |
-| Messages Screen (Feature 2) | ⬜ Not started | Next priority |
+| Messages Screen (Feature 2) | 🔨 In progress | WhatsApp deep link + notification badge |
 | AI Helper (Feature 3) | 📋 Phase 2 | Deferred — needs OpenAI key + microphone permission |
 | Setup — Contacts Manager | ✅ Built | PIN gate (4-digit numpad), add/edit/delete, image picker |
 | Setup — App Settings | ⬜ Not started | Change PIN, set user's first name |
