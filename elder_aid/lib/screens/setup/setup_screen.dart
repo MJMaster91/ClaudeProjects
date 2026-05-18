@@ -5,6 +5,7 @@ import 'package:notification_listener_service/notification_listener_service.dart
 import '../../theme/app_theme.dart';
 import '../../providers/contacts_provider.dart';
 import 'contacts_manager_screen.dart';
+import 'app_settings_screen.dart';
 
 class SetupScreen extends ConsumerStatefulWidget {
   const SetupScreen({super.key});
@@ -62,6 +63,17 @@ class _SetupScreenState extends ConsumerState<SetupScreen>
         body: ListView(
           padding: const EdgeInsets.all(16),
           children: [
+            _SetupTile(
+              icon: Icons.tune,
+              title: 'App Settings',
+              subtitle: 'Set name, change PIN',
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (_) => const AppSettingsScreen()),
+              ),
+            ),
+            const SizedBox(height: 8),
             _SetupTile(
               icon: Icons.people,
               title: 'Contacts',

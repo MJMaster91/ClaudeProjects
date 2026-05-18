@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../widgets/contact_tile.dart';
 import '../providers/contacts_provider.dart';
+import '../providers/settings_provider.dart';
 import 'messages_screen.dart';
 import 'setup/setup_gate.dart';
 
@@ -39,6 +40,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return '$h:$m';
   }
 
+  String? _buildGreeting(String name, int hour) {
+    if (name.isEmpty) return null;
+    final String prefix;
+    if (hour >= 5 && hour < 12) {
+      prefix = 'Good morning';
+    } else if (hour >= 12 && hour < 18) {
+      prefix = 'Good afternoon';
+    } else if (hour >= 18) {
+      prefix = 'Good evening';
+    } else {
+      prefix = 'Good night';
+    }
+    return '$prefix, $name!';
+  }
+
   String _formatDate(DateTime dt) {
     const weekdays = [
       'Monday', 'Tuesday', 'Wednesday', 'Thursday',
@@ -54,6 +70,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final contactsAsync = ref.watch(contactsProvider);
+    final name = ref.watch(userNameProvider).valueOrNull ?? '';
 
     return PopScope(
       canPop: false,
@@ -64,6 +81,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               _ClockHeader(
                 time: _formatTime(_now),
                 date: _formatDate(_now),
+                greeting: _buildGreeting(name, _now.hour),
               ),
               Expanded(
                 child: contactsAsync.when(
@@ -112,7 +130,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 class _ClockHeader extends StatelessWidget {
   final String time;
   final String date;
-  const _ClockHeader({required this.time, required this.date});
+  final String? greeting;
+  const _ClockHeader(
+      {required this.time, required this.date, this.greeting});
 
   @override
   Widget build(BuildContext context) {
@@ -151,6 +171,14 @@ class _ClockHeader extends StatelessWidget {
                     date,
                     style: const TextStyle(fontSize: 20, color: Color(0xFF6B6B6B)),
                   ),
+                  if (greeting != null) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      greeting!,
+                      style: const TextStyle(
+                          fontSize: 20, color: Color(0xFF6B6B6B)),
+                    ),
+                  ],
                 ],
               ),
             ),
