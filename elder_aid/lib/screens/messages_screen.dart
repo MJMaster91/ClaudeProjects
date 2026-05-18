@@ -1,11 +1,15 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
 import 'package:notification_listener_service/notification_listener_service.dart';
 import '../providers/contacts_provider.dart';
 import '../providers/whatsapp_provider.dart';
+import '../providers/settings_provider.dart';
 import '../widgets/whatsapp_tile.dart';
+import '../widgets/clock_header.dart';
 import '../theme/app_theme.dart';
+import 'setup/setup_gate.dart';
 
 class MessagesScreen extends ConsumerStatefulWidget {
   const MessagesScreen({super.key});
@@ -17,16 +21,24 @@ class MessagesScreen extends ConsumerStatefulWidget {
 class _MessagesScreenState extends ConsumerState<MessagesScreen>
     with WidgetsBindingObserver {
   bool _permissionGranted = false;
+  late Timer _timer;
+  late DateTime _now;
 
   @override
   void initState() {
     super.initState();
+    _now = DateTime.now();
+    _timer = Timer.periodic(
+      const Duration(seconds: 1),
+      (_) => setState(() => _now = DateTime.now()),
+    );
     WidgetsBinding.instance.addObserver(this);
     _checkPermission();
   }
 
   @override
   void dispose() {
+    _timer.cancel();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -37,27 +49,75 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen>
   }
 
   Future<void> _checkPermission() async {
-    final granted =
-        await NotificationListenerService.isPermissionGranted();
+    final granted = await NotificationListenerService.isPermissionGranted();
     if (mounted) setState(() => _permissionGranted = granted);
   }
 
+  String _formatTime(DateTime dt) {
+    final h = dt.hour.toString().padLeft(2, '0');
+    final m = dt.minute.toString().padLeft(2, '0');
+    return '$h:$m';
+  }
+
+  String _formatDate(DateTime dt) {
+    const weekdays = [
+      'Monday', 'Tuesday', 'Wednesday', 'Thursday',
+      'Friday', 'Saturday', 'Sunday'
+    ];
+    const months = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    return '${weekdays[dt.weekday - 1]}, ${months[dt.month - 1]} ${dt.day}';
+  }
+
+  String? _buildGreeting(String name, int hour) {
+    if (name.isEmpty) return null;
+    final String prefix;
+    if (hour >= 5 && hour < 12) {
+      prefix = 'Good morning';
+    } else if (hour >= 12 && hour < 18) {
+      prefix = 'Good afternoon';
+    } else if (hour >= 18) {
+      prefix = 'Good evening';
+    } else {
+      prefix = 'Good night';
+    }
+    return '$prefix, $name!';
+  }
+
+  void _goHome() => Navigator.of(context).popUntil((r) => r.isFirst);
+
+  void _goSetup() => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const SetupGate()),
+      );
+
   @override
   Widget build(BuildContext context) {
+    final name = ref.watch(userNameProvider).valueOrNull ?? '';
+
     return PopScope(
       canPop: false,
-      onPopInvokedWithResult: (_, _) =>
-          Navigator.of(context).popUntil((r) => r.isFirst),
+      onPopInvokedWithResult: (_, _) => _goHome(),
       child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Messages'),
-          leading: IconButton(
-            icon: const Icon(Icons.home),
-            onPressed: () =>
-                Navigator.of(context).popUntil((r) => r.isFirst),
+        body: SafeArea(
+          child: Column(
+            children: [
+              ClockHeader(
+                time: _formatTime(_now),
+                date: _formatDate(_now),
+                greeting: _buildGreeting(name, _now.hour),
+                icon: Icons.message_outlined,
+              ),
+              Expanded(child: _buildBody()),
+            ],
           ),
         ),
-        body: _buildBody(),
+        bottomNavigationBar: _BottomNav(
+          onPhone: _goHome,
+          onSetup: _goSetup,
+        ),
       ),
     );
   }
@@ -71,15 +131,11 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen>
     return contactsAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (_, _) => const Center(
-        child: Text('Could not load contacts',
-            style: TextStyle(fontSize: 18)),
+        child: Text('Could not load contacts', style: TextStyle(fontSize: 18)),
       ),
       data: (contacts) {
-        final waContacts =
-            contacts.where((c) => c.hasWhatsapp).toList();
-        if (waContacts.isEmpty) {
-          return const _EmptyState();
-        }
+        final waContacts = contacts.where((c) => c.hasWhatsapp).toList();
+        if (waContacts.isEmpty) return const _EmptyState();
         ref.watch(unreadWhatsappProvider);
         return GridView.builder(
           padding: const EdgeInsets.all(16),
@@ -96,6 +152,54 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen>
           ),
         );
       },
+    );
+  }
+}
+
+class _BottomNav extends StatelessWidget {
+  final VoidCallback onPhone;
+  final VoidCallback onSetup;
+  const _BottomNav({required this.onPhone, required this.onSetup});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 88,
+      color: const Color(0xFF4A9B8E),
+      child: Row(
+        children: [
+          _NavItem(icon: Icons.phone_outlined, label: 'Contacts', onTap: onPhone),
+          _NavItem(icon: Icons.settings_outlined, label: 'Setup', onTap: onSetup),
+        ],
+      ),
+    );
+  }
+}
+
+class _NavItem extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  const _NavItem({required this.icon, required this.label, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: InkWell(
+        onTap: onTap,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 36, color: Colors.white),
+            const SizedBox(height: 6),
+            Text(label,
+                style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white)),
+          ],
+        ),
+      ),
     );
   }
 }

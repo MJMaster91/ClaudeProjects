@@ -7,6 +7,8 @@ import '../../providers/contacts_provider.dart';
 import 'contacts_manager_screen.dart';
 import 'app_settings_screen.dart';
 
+const _settingsChannel = MethodChannel('com.elderaid/settings');
+
 class SetupScreen extends ConsumerStatefulWidget {
   const SetupScreen({super.key});
 
@@ -17,12 +19,14 @@ class SetupScreen extends ConsumerStatefulWidget {
 class _SetupScreenState extends ConsumerState<SetupScreen>
     with WidgetsBindingObserver {
   bool _notificationGranted = false;
+  bool _callGranted = false;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _checkNotificationAccess();
+    _checkCallPermission();
   }
 
   @override
@@ -33,13 +37,21 @@ class _SetupScreenState extends ConsumerState<SetupScreen>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) _checkNotificationAccess();
+    if (state == AppLifecycleState.resumed) {
+      _checkNotificationAccess();
+      _checkCallPermission();
+    }
   }
 
   Future<void> _checkNotificationAccess() async {
-    final granted =
-        await NotificationListenerService.isPermissionGranted();
+    final granted = await NotificationListenerService.isPermissionGranted();
     if (mounted) setState(() => _notificationGranted = granted);
+  }
+
+  Future<void> _checkCallPermission() async {
+    final granted =
+        await _settingsChannel.invokeMethod<bool>('checkCallPermission') ?? false;
+    if (mounted) setState(() => _callGranted = granted);
   }
 
   void _goHome() {
@@ -86,6 +98,24 @@ class _SetupScreenState extends ConsumerState<SetupScreen>
             ),
             const SizedBox(height: 8),
             _SetupTile(
+              icon: Icons.phone,
+              title: 'Phone Call Access',
+              subtitle: _callGranted
+                  ? 'Granted — contacts can be called directly'
+                  : 'Not granted — tap to enable',
+              trailing: _callGranted
+                  ? const Icon(Icons.check_circle,
+                      color: Color(0xFF25D366), size: 28)
+                  : const Icon(Icons.chevron_right),
+              onTap: () async {
+                if (_callGranted) return;
+                final granted =
+                    await _settingsChannel.invokeMethod<bool>('requestCallPermission') ?? false;
+                if (mounted) setState(() => _callGranted = granted);
+              },
+            ),
+            const SizedBox(height: 8),
+            _SetupTile(
               icon: Icons.notifications_active,
               title: 'Notification Access',
               subtitle: _notificationGranted
@@ -96,8 +126,7 @@ class _SetupScreenState extends ConsumerState<SetupScreen>
                       color: Color(0xFF25D366), size: 28)
                   : const Icon(Icons.chevron_right),
               onTap: () async {
-                const ch = MethodChannel('com.elderaid/settings');
-                await ch.invokeMethod('openNotificationListenerSettings');
+                await _settingsChannel.invokeMethod('openNotificationListenerSettings');
               },
             ),
           ],

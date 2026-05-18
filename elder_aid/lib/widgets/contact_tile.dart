@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter/services.dart';
 import '../models/contact.dart';
 import '../theme/app_theme.dart';
 
@@ -9,10 +9,10 @@ class ContactTile extends StatelessWidget {
   const ContactTile({super.key, required this.contact});
 
   Future<void> _call() async {
-    final uri = Uri(scheme: 'tel', path: contact.phone);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri);
-    }
+    const ch = MethodChannel('com.elderaid/settings');
+    try {
+      await ch.invokeMethod('makeDirectCall', contact.phone);
+    } catch (_) {}
   }
 
   @override

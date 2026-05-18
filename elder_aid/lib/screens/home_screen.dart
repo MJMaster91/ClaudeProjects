@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../widgets/contact_tile.dart';
+import '../widgets/clock_header.dart';
 import '../providers/contacts_provider.dart';
 import '../providers/settings_provider.dart';
 import 'messages_screen.dart';
@@ -78,7 +79,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         body: SafeArea(
           child: Column(
             children: [
-              _ClockHeader(
+              ClockHeader(
                 time: _formatTime(_now),
                 date: _formatDate(_now),
                 greeting: _buildGreeting(name, _now.hour),
@@ -121,68 +122,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             context,
             MaterialPageRoute(builder: (_) => const SetupGate()),
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ClockHeader extends StatelessWidget {
-  final String time;
-  final String date;
-  final String? greeting;
-  const _ClockHeader(
-      {required this.time, required this.date, this.greeting});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(16, 24, 16, 12),
-      child: IntrinsicHeight(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Container(
-              width: 72,
-              decoration: BoxDecoration(
-                color: const Color(0xFF4A9B8E),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: const Icon(Icons.phone, size: 40, color: Colors.white),
-            ),
-            const SizedBox(width: 20),
-            Expanded(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    time,
-                    style: const TextStyle(
-                      fontSize: 72,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF2C2C2C),
-                      height: 1,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    date,
-                    style: const TextStyle(fontSize: 20, color: Color(0xFF6B6B6B)),
-                  ),
-                  if (greeting != null) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      greeting!,
-                      style: const TextStyle(
-                          fontSize: 20, color: Color(0xFF6B6B6B)),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ],
         ),
       ),
     );
